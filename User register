@@ -1,0 +1,43 @@
+import requests
+import json
+from behave import given, when, then
+from hamcrest import assert_that, equal_to, has_key
+
+@given('user has registration data')
+def step_impl(context):
+    context.url = "https://reqres.in/api/register"
+    context.payload = json.dumps({
+        "email": "eve.holt@reqres.in",
+        "password": "pistol"
+    })
+    context.headers = {
+        'Content-Type': 'application/json'
+    }
+
+@given('user has incomplete registration data')
+def step_impl(context):
+    context.url = "https://reqres.in/api/register"
+    context.payload = json.dumps({
+        "email": "eve.holt@reqres.in"
+    })
+    context.headers = {
+        'Content-Type': 'application/json'
+    }
+
+@when('user sends a registration request')
+def step_impl(context):
+    context.response = requests.post(context.url, headers=context.headers, data=context.payload)
+
+@then('the response status code should be {status_code:d}')
+def step_impl(context, status_code):
+    assert_that(context.response.status_code, equal_to(status_code))
+
+@then('the response should contain a token')
+def step_impl(context):
+    response_data = context.response.json()
+    assert_that(response_data, has_key('token'))
+
+@then('the response should contain an error message')
+def step_impl(context):
+    response_data = context.response.json()
+    assert_that(response_data, has_key('error'))
