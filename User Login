@@ -1,0 +1,52 @@
+import requests
+import json
+from behave import given, when, then
+from hamcrest import assert_that, equal_to, has_key
+
+@given('user has valid login data')
+def step_impl(context):
+    context.url = "https://reqres.in/api/login"
+    context.payload = json.dumps({
+        "email": "eve.holt@reqres.in",
+        "password": "cityslicka"
+    })
+    context.headers = {
+        'Content-Type': 'application/json'
+    }
+
+@given('user has invalid login data')
+def step_impl(context):
+    context.url = "https://reqres.in/api/login"
+    context.payload = json.dumps({
+        "email": "eve.holt@reqres.in",
+        "password": "wrongpassword"
+    })
+    context.headers = {
+        'Content-Type': 'application/json'
+    }
+
+@when('user sends a login request')
+def step_impl(context):
+    context.response = requests.post(context.url, headers=context.headers, data=context.payload)
+
+@then('the response status code should be {status_code:d}')
+def step_impl(context, status_code):
+    assert_that(context.response.status_code, equal_to(status_code))
+
+@then('the response should contain a token')
+def step_impl(context):
+    response_data = context.response.json()
+    assert_that(response_data, has_key('token'))
+
+@then('the response time should be within acceptable range')
+def step_impl(context):
+    assert_that(context.response.elapsed.total_seconds() * 1000, less_than(500))
+
+@then('the response content type should be application/json')
+def step_impl(context):
+    assert_that(context.response.headers['Content-Type'], equal_to('application/json'))
+
+@then('the response should contain an error message')
+def step_impl(context):
+    response_data = context.response.json()
+    assert_that(response_data, has_key('error'))
